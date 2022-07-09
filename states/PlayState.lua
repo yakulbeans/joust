@@ -2,10 +2,10 @@ PlayState = Class{__includes = BaseState}
 
 function PlayState:init()
 	player1 = Ostrich(VIRTUAL_WIDTH / 3 - 8, VIRTUAL_HEIGHT - 90, 16, 24)
-	platform1 = Platform('platform1Name', VIRTUAL_WIDTH / 3, VIRTUAL_HEIGHT / 2, 80, 4)
-	groundPlatform = Platform('groundPlatformName', -player1.width, VIRTUAL_HEIGHT - GROUND_OFFSET, VIRTUAL_WIDTH + (player1.width * 2), 36)
+	platform1 = Platform(VIRTUAL_WIDTH / 3, VIRTUAL_HEIGHT / 2, 80, 4)
+	groundPlatform = Platform(-player1.width, VIRTUAL_HEIGHT - GROUND_OFFSET, VIRTUAL_WIDTH + (player1.width * 2), 36)
 	collidablePlatforms = {platform1, groundPlatform}
-	ground = Platform('name', 1, 1, 1, 1)
+	--ground = Platform('name', 1, 1, 1, 1)
 
 end
 
@@ -74,7 +74,6 @@ function PlayState:render()
 		--'TOP COLL: ' .. tostring(player1:topCollides(platform1)),
 		'platform1 BotCol: ' .. tostring(player1:bottomCollides(platform1)),
 		'groundPlat BotCol: ' .. tostring(player1:bottomCollides(groundPlatform)),
-		--'name: ' .. tostring(ground),
 		--'topcheckGrounded: ' .. tostring(player1:checkGrounded(groundPlatform)),
  		--'RIGHT COLL: ' .. tostring(player1:rightCollides(platform1)),
 		--'LEFT COLL: ' .. tostring(player1:leftCollides(platform1)),

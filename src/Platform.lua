@@ -1,11 +1,10 @@
 Platform = Class{}
 
-function Platform:init(name, x, y, width, height)
+function Platform:init(x, y, width, height)
 	self.x = x
 	self.y = y
 	self.width = width
 	self.height = height
-	self.name = name
 end
 
 function Platform:update(dt)

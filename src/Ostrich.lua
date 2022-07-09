@@ -8,8 +8,8 @@ function Ostrich:init(x, y, width, height)
 	self.atlas = playerAtlas
 	self.dy = 0
 	self.dx = 0
-	self.justStoppedTimer = INPUTLAG
-	self.justTurnedTimer = INPUTLAG
+	self.justStoppedTimer = STOPTURNTIMER
+	self.justTurnedTimer = STOPTURNTIMER
 	self.grounded = false
 	self.skid = false
 	self.facingRight = true
@@ -30,16 +30,13 @@ end
 
 function Ostrich:checkGrounded(collidablePlatforms)
 	if self.y == collidablePlatforms.y - 24 then
-		if self.x < collidablePlatforms.x + collidablePlatforms.width - BUFFER and self.x + self.width > collidablePlatforms.x + BUFFER then
-			--self.grounded = true
+		if self.x < collidablePlatforms.x + collidablePlatforms.width - PLATFORMBUFFER and self.x + self.width > collidablePlatforms.x + PLATFORMBUFFER then
 			return true
 		else
 			return false
 		end
 	end
-	return false
-	--self.grounded = false
-	
+	return false	
 end
 
 function Ostrich:topCollides(collidable)
@@ -54,7 +51,7 @@ end
 
 function Ostrich:bottomCollides(collidable)
 	if (self.y + self.height > collidable.y and self.y + self.height < collidable.y + collidable.height) then
-		if (self.x < collidable.x + collidable.width - BUFFER and self.x + self.width > collidable.x + BUFFER) then
+		if (self.x < collidable.x + collidable.width - PLATFORMBUFFER and self.x + self.width > collidable.x + PLATFORMBUFFER) then
 			ground = collidable
 			return true
 		end
@@ -64,7 +61,7 @@ function Ostrich:bottomCollides(collidable)
 end
 
 function Ostrich:rightCollides(collidable)
-	if (self.x + self.width > collidable.x + BUFFER / 2 and self.x + self.width < collidable.x + collidable.width) then
+	if (self.x + self.width > collidable.x + PLATFORMBUFFER / 2 and self.x + self.width < collidable.x + collidable.width) then
 		if (self.y < collidable.y + collidable.height and self.y + self.height > collidable.y) then
 			if self.facingRight then
 				self.x = collidable.x - self.width
@@ -77,7 +74,7 @@ function Ostrich:rightCollides(collidable)
 end
 
 function Ostrich:leftCollides(collidable)
-	if (self.x < collidable.x + collidable.width - BUFFER / 2 and self.x > collidable.x) then
+	if (self.x < collidable.x + collidable.width - PLATFORMBUFFER / 2 and self.x > collidable.x) then
 		if (self.y < collidable.y + collidable.height and self.y + self.height > collidable.y) then
 			if not self.facingRight then
 				self.x = collidable.x + collidable.width
@@ -97,7 +94,7 @@ function Ostrich:update(dt)
 
 	---[[
 
-	--CYCLE THROUGH PLATFORMS
+	--CYCLE THROUGH PLATFORMS FOR COLLISION
 	for index, platform in pairs(collidablePlatforms) do
 			--BOTTOM COLLIDES
 		if self:bottomCollides(platform) then
@@ -110,7 +107,7 @@ function Ostrich:update(dt)
 
 		if self:topCollides(platform) then
 			self.y = platform.y + platform.height
-			self.dy = .8
+			self.dy = (self.dy * - 1)
 		end
 
 		--LEFT COLLIDES SETS POSITIVE DX
@@ -129,47 +126,11 @@ function Ostrich:update(dt)
 	end
 	--]]
 
-	---[[
-	--BUSTED FALLING LOGIC
-
-	if not self:checkGrounded(ground) then
-		self.grounded = false
-		ground = Platform('name', 1, 1, 1, 1)
-	end
---]]
 
 
 
---[[ --HARD CODED PLATFORM 1 Collision logic working ok, minus perpetual side collision if dx is slow
-	if self:bottomCollides(platform1) then
-		self.height = 24
-		self.y = platform1.y - self.height
-		self.dy = 0
-		self.grounded = true
-	end
 
-	if self:topCollides(platform1) then
-		self.y = platform1.y + platform1.height
-		--self.dy = .8
-		self.dy = math.abs(self.dy)
-	end
 
-	if self:leftCollides(platform1) then
-		sounds['collide']:play()
-		self.x = platform1.x + platform1.width
-		self.dx = math.abs(self.dx)
-	end
-
-	if self:rightCollides(platform1) then
-		sounds['collide']:play()
-		self.x = platform1.x - self.width
-		self.dx = -self.dx
-	end
-
-	if not self:checkGrounded(platform1) then
-			self.grounded = false
-	end
---]]
 
 
 
@@ -181,26 +142,9 @@ function Ostrich:update(dt)
 		self.dy =  self.dy + GRAVITY * dt
 	end
 
+	--UPDATES OSTRICH Y
 	self.y = self.y + self.dy
-	
-	--CLAMPS Y TO GROUND
-	--self.y = math.min(VIRTUAL_HEIGHT - self.height - GROUND_OFFSET, self.y + self.dy)
 
-	--GROUNDING LOGIC
-	
---[[ OLD BUSTED GROUNDED LOGIC
-	if self.y == VIRTUAL_HEIGHT - self.height - GROUND_OFFSET then
-		self.height = 24
-		--Sets y to appropriate height
-		self.y = VIRTUAL_HEIGHT - self.height - GROUND_OFFSET --depends on where ground is, right now its only the bottom floor
-		self.grounded = true
-		self.dy = 0
-
-	elseif self.y < VIRTUAL_HEIGHT - self.height - 36 then
-		self.grounded = false
-		self.height = 16
-	end
-	-]]
 
 	--ENSURES OSTRICH FACING DIRECTION OF DX - SKID LOGIC FOR > SPEED 2
 	if self.grounded and self.dx > 0 then
@@ -226,6 +170,7 @@ function Ostrich:update(dt)
 	if self.x < -self.width then
 		self.x = VIRTUAL_WIDTH
 	end
+
 
 
 	--INPUT HANDLING
@@ -257,16 +202,13 @@ function Ostrich:update(dt)
 	if love.keyboard.wasReleased('left') or love.keyboard.wasReleased('right') then
 		self.lastInputLocked = false
 	end
-
-
-
 	--INPUT LAG BOOLEANS AND DECREMENT
 	if self.justStopped then
 		if self.justStoppedTimer > 0 then
 			self.justStoppedTimer = self.justStoppedTimer - dt
 		else
 			self.justStopped = false
-			self.justStoppedTimer = INPUTLAG
+			self.justStoppedTimer = STOPTURNTIMER
 		end
 	end
 
@@ -275,16 +217,17 @@ function Ostrich:update(dt)
 			self.justTurnedTimer = self.justTurnedTimer - dt
 		else
 			self.justTurned = false
-			self.justTurnedTimer = INPUTLAG
+			self.justTurnedTimer = STOPTURNTIMER
 		end
 	end
 
 
 	
 
+
 	if self.grounded then
 		self.height = 24
-		---[[SKID UPON LANDING __MAKE THIS ONLY PLAY ONCE***
+		---[[SKID UPON LANDING
 		if love.keyboard.isDown('left') and lastInput[1] == "left" and self.dx > .7 and not self.skid then
 			sounds['leftStep']:stop()
 			sounds['rightStep']:stop()
@@ -302,7 +245,7 @@ function Ostrich:update(dt)
 		if self.facingRight then
 			--MOVE TO THE RIGHT IF NOT JUSTTURNED OR SKIDDING
 			if love.keyboard.isDown('right') and lastInput[1] == "right" and not self.skid and not self.justTurned then
-				self.dx = math.max(.12, (math.min(self.dx + SPEEDRAMP, MAXSPEED)))
+				self.dx = math.max(.12, (math.min(self.dx + PLAYERVELOCITY, MAXSPEED)))
 			end
 	
 			if self.dx == 0 then
@@ -340,7 +283,7 @@ function Ostrich:update(dt)
 
 			--MOVE TO THE LEFT IF NOT JUSTTURNED OR SKIDDING
 			if love.keyboard.isDown('left') and lastInput[1] == "left" and not self.skid and not self.justTurned then
-					self.dx = math.min(-.12, (math.max(self.dx - SPEEDRAMP, -MAXSPEED)))
+					self.dx = math.min(-.12, (math.max(self.dx - PLAYERVELOCITY, -MAXSPEED)))
 			end
 
 			if self.dx == 0 then
@@ -390,19 +333,17 @@ function Ostrich:update(dt)
 
 		--FLAPPING DX CHANGE TO DO
 		if love.keyboard.isDown('left') and lastInput[1] == 'left' and love.keyboard.wasPressed('a') then
-			self.dx = math.max(self.dx - FLAPAMOUNT, -MAXSPEED)
+			self.dx = math.max(self.dx - PLAYERAERIALVELOCITY, -MAXSPEED)
 		end
 
 		if love.keyboard.isDown('right') and lastInput[1] == 'right' and love.keyboard.wasPressed('a') then
-			self.dx = math.min(self.dx + FLAPAMOUNT, MAXSPEED)
+			self.dx = math.min(self.dx + PLAYERAERIALVELOCITY, MAXSPEED)
 		end
 	end
 
-
----[[
 		--PLAYER1 JUMPING
 	if love.keyboard.wasPressed('a') then
-		ground = Platform('name', 1, 1, 1, 1)
+		--ground = Platform(1, 1, 1, 1)
 		self.grounded = false
 		sounds['flap']:play()
 
@@ -417,7 +358,6 @@ function Ostrich:update(dt)
 			self.dy = -.4
 		end
 	end
-	--]]
 
 
 	if self.dx == 0 then
@@ -433,58 +373,6 @@ function Ostrich:update(dt)
 	else
 		self.x = self.x + self.dx
 	end
-
-	--[[
-	if self.dx == 0 then
-		sounds['skid']:stop()
-		self.skid = false
-		self.justStopped = true
-	elseif self.dx > 0 and not self.skid then
-		self.x = self.x + self.dx
-	elseif self.dx > 0 and self.skid and self.grounded then
-		self.dx = math.max(0, self.dx - .08)
-		self.x = self.x + self.dx
-	elseif self.dx > 0 and self.skid and not self.grounded then
-		self.x = self.x + self.dx
-	elseif self.dx < 0 and not self.skid then
-		self.x = self.x + self.dx
-	elseif self.dx < 0 and self.skid and self.grounded then
-		self.dx = math.min(0, self.dx + .08)
-		self.x = self.x + self.dx
-	elseif self.dx < 0 and self.skid and not self.grounded then
-		self.x = self.x + self.dx
-	end
-	--]]
---[[
-		--UPDATES PLAYER X RIGHT VELOCITY BASED ON DX, DETERMINES SKID STOP
-	if self.dx >= 0 and not self.skid then
-		self.x = self.x + self.dx
-	elseif self.dx >= 0 and self.skid and self.grounded then
-		self.dx = math.max(0, self.dx - .08)
-		self.x = self.x + self.dx
-		if self.dx == 0 then
-			sounds['skid']:stop()
-			self.skid = false
-			self.justStopped = true
-		end 
-	end
-
-
-	--UPDATES PLAYER X LEFT VELOCITY BASED ON DX, DETERMINES SKID STOP
-	if self.dx <= 0 and not self.skid then
-		self.x = self.x + self.dx
-	elseif self.dx <= 0 and self.skid and self.grounded then
-		self.dx = math.min(0, self.dx + .08)
-		self.x = self.x + self.dx
-		if self.dx == 0 then
-			sounds['skid']:stop()
-			self.skid = false
-			self.justStopped = true
-		end
-	end
---]]
-
-
 
 
 -- OSTRICH1 ANIMATION CYCLE
@@ -505,7 +393,6 @@ function Ostrich:update(dt)
 		if animationTimer <= 0 then
 			animationTimer = 1 / fps
 			self.frame = self.frame + 1
-			---[[
 			if self.frame == 2 and self.alternate then
 				self.alternate = false
 				sounds['leftStep']:play()
@@ -513,7 +400,6 @@ function Ostrich:update(dt)
 				self.alternate = true
 				sounds['rightStep']:play()
 			end
-			--]]
 	end
 			--LOOP FRAME BACK TO 1
 			if self.frame > totalFrames then self.frame = 1 end
@@ -549,8 +435,8 @@ end
 
 function Ostrich:render()
 	love.graphics.setColor(255/255, 255/255, 255/255, 255/255)
-	love.graphics.print('topCheckGrounded: ' .. tostring(self:checkGrounded(platform1)))
-	love.graphics.print('groundCheckGrounded: ' .. tostring(self:checkGrounded(groundPlatform)), 0, 10)
+	--love.graphics.print('topCheckGrounded: ' .. tostring(self:checkGrounded(platform1)))
+	--love.graphics.print('groundCheckGrounded: ' .. tostring(self:checkGrounded(groundPlatform)), 0, 10)
 
 	if player1.facingRight then
 		love.graphics.draw(self.atlas, ostrichSprite, self.x, self.y) 
